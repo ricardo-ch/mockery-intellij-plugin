@@ -1,17 +1,15 @@
 <idea-plugin>
-  <id>com.your.company.unique.plugin.id</id>
-  <name>Plugin display name here</name>
+  <id>ch.ricardo.plugins.intellij.mockery</id>
+  <name>Golang mockery plugin</name>
   <version>1.0</version>
-  <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
+  <vendor email="giuseppe.landolfi@ricardo.ch" url="https:/github.com/ricardo-ch">Ricardo.ch</vendor>
 
   <description><![CDATA[
-      Enter short description for your plugin here.<br>
-      <em>most HTML tags may be used</em>
+      This plugin provides Golang developers a shortcut for auto-generating <a href="https://github.com/stretchr/testify">testify mocks</a> by offering a shortcut to call the <a href="https://github.com/vektra/mockery">mockery</a> generator behind the scenes.
     ]]></description>
 
   <change-notes><![CDATA[
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>
+      First release.<br>
     ]]>
   </change-notes>
 
@@ -20,16 +18,23 @@
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->
-  <!-- uncomment to enable plugin in all products
   <depends>com.intellij.modules.lang</depends>
-  -->
 
   <extensions defaultExtensionNs="com.intellij">
     <!-- Add your extensions here -->
   </extensions>
 
+  <application-components>
+    <component>
+      <implementation-class>ch.ricardo.plugins.intellij.mockery.MockeryGenPlugin</implementation-class>
+    </component>
+  </application-components>
+
   <actions>
-    <!-- Add your actions here -->
+    <action id="ch.ricardo.plugins.intellij.mockery.action.GenMockeryCodeAction" class="ch.ricardo.plugins.intellij.mockery.action.GenMockeryCodeAction"
+            text="Golang mockery" description="generate testify/mock files for Go interfaces">
+      <add-to-group group-id="GenerateGroup" anchor="last"/>
+    </action>
   </actions>
 
 </idea-plugin>

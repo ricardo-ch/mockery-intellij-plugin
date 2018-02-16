@@ -1,1 +1,3 @@
 *.iml
+mockery-intellij-plugin.jar
+out/
