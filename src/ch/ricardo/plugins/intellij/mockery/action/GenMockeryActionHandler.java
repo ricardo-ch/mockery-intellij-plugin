@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
 
 public class GenMockeryActionHandler extends EditorActionHandler {
 
+    // Dialog for allowing the user to choose which mocks he wants to generate
     private class InterfaceChooser extends ChooseElementsDialog<String> {
 
         private InterfaceChooser (Project project, List<String> interfaces) {
@@ -53,31 +55,39 @@ public class GenMockeryActionHandler extends EditorActionHandler {
         }
     }
 
+    // ProcessListener implementation which triggers project refresh on termination
+    private class ProjectRefreshingProcessListener implements ProcessListener {
 
-    @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+        final Project project;
 
-        final StringBuilder out = new StringBuilder();
-        final StringBuilder err = new StringBuilder();
-
-        ArrayList<String> interfaces = new ArrayList<>();
-        for (String s : editor.getDocument().getText().split("\\r?\\n")) {
-            Pattern pattern = Pattern.compile("type (.*?) interface");
-            Matcher matcher = pattern.matcher(s);
-            if (matcher.find())
-            {
-                interfaces.add(matcher.group(1));
-            }
+        private ProjectRefreshingProcessListener(Project project) {
+            this.project = project;
         }
 
-        HintManager.getInstance().showErrorHint(editor, "not supported");
+        @Override public void startNotified(@NotNull ProcessEvent processEvent) {}
+        @Override public void processWillTerminate(@NotNull ProcessEvent processEvent, boolean b) { }
+        @Override public void onTextAvailable(@NotNull ProcessEvent processEvent, @NotNull Key key) { }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent processEvent) {
+            VfsUtil.markDirtyAndRefresh(true, true, true, project.getBaseDir());
+        }
+
+    }
+
+    // This method is called once the user selects the 'Golang mockery' Action
+    @Override
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
+
+        // Get all interfaces
+        List<String> interfaces = getInterfacesInDocument(editor.getDocument());
 
         if (interfaces.isEmpty()) {
-
             HintManager.getInstance().showErrorHint(editor, "No interfaces found");
             return;
         }
 
+        // Let the user choose those he wants mocks for
         InterfaceChooser chooser = new InterfaceChooser(editor.getProject(), interfaces);
         chooser.selectElements(interfaces);
         List<String> selectedInterfaces = chooser.showAndGetResult();
@@ -86,6 +96,7 @@ public class GenMockeryActionHandler extends EditorActionHandler {
             return;
         }
 
+        // Do the generation
         Path filePath = Paths.get(FileDocumentManager.getInstance().getFile(editor.getDocument()).getCanonicalPath());
 
         GeneralCommandLine commandLine = PtyCommandLine.isEnabled() ? new PtyCommandLine() : new GeneralCommandLine();
@@ -107,31 +118,28 @@ public class GenMockeryActionHandler extends EditorActionHandler {
             return;
         }
 
+        final StringBuilder out = new StringBuilder();
+        final StringBuilder err = new StringBuilder();
+
         processHandler.addProcessListener(new OutputListener(out, err));
-        processHandler.addProcessListener(new ProcessListener() {
-            @Override
-            public void startNotified(@NotNull ProcessEvent processEvent) {
-
-            }
-
-            @Override
-            public void processTerminated(@NotNull ProcessEvent processEvent) {
-                VfsUtil.markDirtyAndRefresh(true, true, true, editor.getProject().getBaseDir());
-            }
-
-            @Override
-            public void processWillTerminate(@NotNull ProcessEvent processEvent, boolean b) {
-
-            }
-
-            @Override
-            public void onTextAvailable(@NotNull ProcessEvent processEvent, @NotNull Key key) {
-
-            }
-        });
+        processHandler.addProcessListener(new ProjectRefreshingProcessListener(editor.getProject()));
         processHandler.startNotify();
         ExecutionHelper.executeExternalProcess(editor.getProject(), processHandler, new ExecutionModes.BackGroundMode("mockery generation"), commandLine);
 
+    }
+
+    // Looks for Go interfaces in a given document
+    private List<String> getInterfacesInDocument(Document document) {
+        List<String> interfaces = new ArrayList<>();
+        for (String s : document.getText().split("\\r?\\n")) {
+            Pattern pattern = Pattern.compile("type (.*?) interface");
+            Matcher matcher = pattern.matcher(s);
+            if (matcher.find())
+            {
+                interfaces.add(matcher.group(1));
+            }
+        }
+        return interfaces;
     }
 }
 

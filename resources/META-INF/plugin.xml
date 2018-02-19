@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>ch.ricardo.plugins.intellij.mockery</id>
-  <name>Golang mockery plugin</name>
-  <version>1.0</version>
+  <name>Golang mockery</name>
+  <version>1.0.1</version>
   <vendor email="giuseppe.landolfi@ricardo.ch" url="https:/github.com/ricardo-ch">Ricardo.ch</vendor>
 
   <description><![CDATA[
