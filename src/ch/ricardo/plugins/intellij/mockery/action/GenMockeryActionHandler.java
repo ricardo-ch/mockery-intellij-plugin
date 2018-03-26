@@ -119,7 +119,7 @@ public class GenMockeryActionHandler extends EditorActionHandler {
                     break;
                 }
 
-            if(mockeryPath.isEmpty())
+            if(!mockeryPath.isEmpty())
                 break;
         }
 
