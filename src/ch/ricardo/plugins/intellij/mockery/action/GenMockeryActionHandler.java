@@ -98,10 +98,36 @@ public class GenMockeryActionHandler extends EditorActionHandler {
 
         // Do the generation
         Path filePath = Paths.get(FileDocumentManager.getInstance().getFile(editor.getDocument()).getCanonicalPath());
-
         GeneralCommandLine commandLine = PtyCommandLine.isEnabled() ? new PtyCommandLine() : new GeneralCommandLine();
         commandLine.withWorkDirectory(filePath.getParent().toString());
-        commandLine.setExePath(EnvironmentUtil.getValue("GOPATH") + "/bin/mockery");
+
+        String[] envGoPaths = EnvironmentUtil.getValue("GOPATH").split(File.pathSeparator);
+        String mockeryPath = "";
+
+        for (String goPath : envGoPaths) {
+            File goPathBin = new File(goPath + "/bin");
+            if(!goPathBin.exists() || !goPathBin.isDirectory())
+                continue;
+
+            String[] goPathBinFiles = goPathBin.list();
+            if(goPathBinFiles == null)
+                continue;
+
+            for(String goPathBinExecutable : goPathBinFiles)
+                if(goPathBinExecutable.startsWith("mockery.")) {
+                    mockeryPath = new File(goPath + "/bin/mockery").getAbsolutePath();
+                    break;
+                }
+
+            if(mockeryPath.isEmpty())
+                break;
+        }
+
+        if(mockeryPath.isEmpty()) {
+            HintManager.getInstance().showErrorHint(editor, "Mockery executable wasn't found in GOPATH");
+            return;
+        }
+        commandLine.setExePath(mockeryPath);
 
         StringJoiner joiner = new StringJoiner("|");
         for (String s : selectedInterfaces) {
