@@ -114,7 +114,7 @@ public class GenMockeryActionHandler extends EditorActionHandler {
                 continue;
 
             for(String goPathBinExecutable : goPathBinFiles)
-                if(goPathBinExecutable.startsWith("mockery.")) {
+                if(goPathBinExecutable.equals("mockery") || goPathBinExecutable.equals("mockery.exe")) {
                     mockeryPath = new File(goPath + "/bin/mockery").getAbsolutePath();
                     break;
                 }
