@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.io.File;
 
 import javax.swing.*;
 import java.nio.file.Path;
